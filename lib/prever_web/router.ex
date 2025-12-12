@@ -18,6 +18,7 @@ defmodule PreverWeb.Router do
     pipe_through :browser
 
     get "/", PageController, :home
+    live "/live", MapLive, :index
   end
 
   # Other scopes may use custom stacks.

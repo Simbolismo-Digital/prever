@@ -81,7 +81,13 @@ defmodule Prever.MixProject do
       "ecto.setup": ["ecto.create", "ecto.migrate", "run priv/repo/seeds.exs"],
       "ecto.reset": ["ecto.drop", "ecto.setup"],
       test: ["ecto.create --quiet", "ecto.migrate --quiet", "test"],
-      "assets.setup": ["tailwind.install --if-missing", "esbuild.install --if-missing"],
+      "assets.setup": [
+        "cmd --cd assets npm install",
+        "cmd mkdir -p priv/static/assets/css/",
+        "cmd cp -r assets/node_modules/leaflet/dist/images priv/static/assets/css/",
+        "tailwind.install --if-missing",
+        "esbuild.install --if-missing"
+      ],
       "assets.build": ["compile", "tailwind prever", "esbuild prever"],
       "assets.deploy": [
         "tailwind prever --minify",
