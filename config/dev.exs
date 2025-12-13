@@ -8,7 +8,10 @@ config :prever, Prever.Repo,
   database: "prever_dev",
   stacktrace: true,
   show_sensitive_data_on_connection_error: true,
-  pool_size: 10,
+  pool_size: 50,
+  pool_count: 10,
+  queue_target: 15_000,
+  queue_interval: 2_000,
   extensions: [{Geo.PostGIS.Extension, library: Geo}]
 
 # For development, we disable any cache and enable

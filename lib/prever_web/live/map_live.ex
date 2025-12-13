@@ -15,6 +15,8 @@ defmodule PreverWeb.MapLive do
     burned_areas = Prever.Wildfire.BurnedArea.all()
     total_area_burned = Enum.reduce(burned_areas, 0.0, fn ba, acc -> acc + ba.area end)
 
+    Process.send_after(self(), :start_stream, 5_000)
+
     {:ok,
      assign(
        socket,
@@ -48,7 +50,7 @@ defmodule PreverWeb.MapLive do
             2
           )} hectares
         </h3>
-
+        
     <!-- Disclaimer -->
         <p style="font-size: 0.85rem; color: #555; margin-top: 0.5rem;">
           Valor aproximado com base em detecções de satélite não necessariamente refletem área total queimada.
@@ -63,7 +65,7 @@ defmodule PreverWeb.MapLive do
           </a>
           se aproximam desses valores.
         </p>
-
+        
     <!-- Divider -->
         <hr style="border: 1px solid #1f2630; margin: 1rem 0;" />
         <.live_component
@@ -84,5 +86,54 @@ defmodule PreverWeb.MapLive do
     )
 
     {:noreply, socket}
+  end
+
+  # Trigger stream after mount
+  def handle_info(:start_stream, socket) do
+    import Ecto.Query
+
+    self = self()
+    # Use the LiveView process itself to receive chunks
+    Task.start(fn ->
+      amazonia_legal_wkt =
+        Prever.Wildfire.Shapefile.load_shape_geojson("priv/mvp/legal_amazon_2024.shp")
+        |> hd()
+        |> Geo.WKT.encode!()
+
+      # Grid-based aggregation
+      query =
+        from(f in Prever.Wildfire.FireFocus,
+          where: fragment("? && ST_GeomFromText(?)", f.geometry, ^amazonia_legal_wkt),
+          distinct: fragment("ST_SnapToGrid(?, ?)", f.geometry, 0.05),
+          order_by: fragment("ST_SnapToGrid(?, ?)", f.geometry, 0.05),
+          select: fragment("ST_AsGeoJSON(?)", f.geometry)
+        )
+
+      Prever.Repo.transaction(
+        fn ->
+          Prever.Repo.stream(query)
+          |> Stream.chunk_every(1000)
+          |> Stream.each(fn json_chunk ->
+            # Send to the LiveView process, not socket.pid
+            send(self, {:fire_chunk, json_chunk})
+            Process.sleep(500)
+          end)
+          |> Stream.run()
+        end,
+        timeout: :infinity
+      )
+    end)
+
+    {:noreply, socket}
+  end
+
+  # Fire chunks to client
+  def handle_info({:fire_chunk, json_chunk}, socket) do
+    chunk =
+      Enum.map(json_chunk, fn geojson_str ->
+        Jason.decode!(geojson_str)
+      end)
+
+    {:noreply, push_event(socket, "new_fire_geometry", %{chunk: chunk})}
   end
 end

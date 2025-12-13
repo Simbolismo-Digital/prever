@@ -6,6 +6,7 @@ let MapHook = {
     this.map = this.init_map(this.el.dataset.init);
 
     L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+      minZoom: 5,
       maxZoom: 19,
       attribution: "© OpenStreetMap contributors"
     }).addTo(this.map);
@@ -19,15 +20,25 @@ let MapHook = {
   },
   init_map(initJson) {
     const init = JSON.parse(initJson);
-    const map = L.map(this.el).setView([init.lat, init.lng], init.zoom);
+    const map = L.map(this.el, {preferCanvas: true}).setView([init.lat, init.lng], init.zoom);
+    // Define os limites máximos que o mapa pode se mover
+    const offset = 20; // graus de latitude/longitude que você permite se afastar do centro
+    const southWest = [init.lat - offset, init.lng - offset];
+    const northEast = [init.lat + offset, init.lng + offset];
+    const bounds = L.latLngBounds(southWest, northEast);
+    map.setMaxBounds(bounds);
     return map;
   },
 
   hook_events() {
     // Debug click: show lat/lng
     this.map.on("click", (e) => {
-      console.log("Lat:", e.latlng.lat, "Lng:", e.latlng.lng);
+      console.log("Lat:", e.latlng.lat, "Lng:", e.latlng.lng, "Zoom:", this.map.getZoom());
     });
+
+  this.handleEvent("new_fire_geometry", ({ chunk }) => {
+    this.renderFireFocus(chunk);
+  });
   },
 
   updated() {
@@ -75,7 +86,37 @@ let MapHook = {
         );
       });
     });
+  },
+
+renderFireFocus(fireFocus) {
+  if (!this.fireFocusLayer) {
+    // Inicializa o layer GeoJSON apenas uma vez
+    this.fireFocusLayer = L.geoJSON([], { 
+      pointToLayer: (feature, latlng) => 
+        L.circleMarker(latlng, {
+          radius: 0.4 / (30 / this.map.getZoom()),
+          color: 'blue',
+          fillColor: 'blue',
+          fillOpacity: 1,
+          weight: 1
+        }),
+      preferCanvas: true
+    }).addTo(this.map);
   }
+
+  // Converte chunk para GeoJSON
+  const chunkGeoJSON = {
+    type: "FeatureCollection",
+    features: fireFocus.map(({coordinates: [lng, lat]}) => ({
+      type: "Feature",
+      geometry: { type: "Point", coordinates: [lng, lat] },
+      properties: {}
+    }))
+  };
+
+  // Adiciona o chunk ao layer existente
+  this.fireFocusLayer.addData(chunkGeoJSON);
+}
 };
 
 export default MapHook;

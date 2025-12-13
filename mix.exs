@@ -70,7 +70,8 @@ defmodule Prever.MixProject do
       # Data handling
       {:exshape, "~> 2.2"},
       {:geo_postgis, "~> 3.7"},
-      {:geo, "~> 4.1"}
+      {:geo, "~> 4.1"},
+      {:csv, "~> 3.2"}
     ]
   end
 
