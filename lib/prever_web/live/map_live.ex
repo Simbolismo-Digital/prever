@@ -50,7 +50,7 @@ defmodule PreverWeb.MapLive do
             2
           )} hectares
         </h3>
-        
+
     <!-- Disclaimer -->
         <p style="font-size: 0.85rem; color: #555; margin-top: 0.5rem;">
           Valor aproximado com base em detecções de satélite não necessariamente refletem área total queimada.
@@ -65,7 +65,7 @@ defmodule PreverWeb.MapLive do
           </a>
           se aproximam desses valores.
         </p>
-        
+
     <!-- Divider -->
         <hr style="border: 1px solid #1f2630; margin: 1rem 0;" />
         <.live_component
@@ -103,10 +103,10 @@ defmodule PreverWeb.MapLive do
       # Grid-based aggregation
       query =
         from(f in Prever.Wildfire.FireFocus,
-          where: fragment("? && ST_GeomFromText(?)", f.geometry, ^amazonia_legal_wkt),
-          distinct: fragment("ST_SnapToGrid(?, ?)", f.geometry, 0.05),
-          order_by: fragment("ST_SnapToGrid(?, ?)", f.geometry, 0.05),
-          select: fragment("ST_AsGeoJSON(?)", f.geometry)
+          where: fragment("? && ST_GeomFromText(?, 4326)", f.geometry, ^amazonia_legal_wkt),
+          group_by: fragment("ST_SnapToGrid(?, ?)", f.geometry, 0.03),
+          having: fragment("COUNT(*) > ?", 40),
+          select: fragment("ST_AsGeoJSON(ST_Centroid(ST_Collect(?)))", f.geometry)
         )
 
       Prever.Repo.transaction(
