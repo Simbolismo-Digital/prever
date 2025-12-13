@@ -57,13 +57,23 @@ let MapHook = {
       this.burnedAreasLayer = L.layerGroup().addTo(this.map);
     }
 
-    const burnedAreass = JSON.parse(burnedAreasJson);
-    burnedAreass.forEach(polygon => {
+    const burnedAreas = JSON.parse(burnedAreasJson);
+    burnedAreas.forEach(polygon => {
       const geojsonLayer = L.geoJSON(polygon.geometry, {
         style: { color: 'red', weight: 2, fillOpacity: 0.4 }
-      }).bindPopup(polygon.popup);
+      }).bindPopup(polygon.popup).addTo(this.burnedAreasLayer);
 
-      geojsonLayer.addTo(this.burnedAreasLayer);
+      // Bind tooltip to show info on hover
+      geojsonLayer.eachLayer(layer => {
+        layer.bindTooltip(
+          polygon.popup,
+          {
+            sticky: true,      // tooltip follows the mouse
+            direction: 'top',
+            className: 'hover-tooltip'
+          }
+        );
+      });
     });
   }
 };

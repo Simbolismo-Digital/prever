@@ -12,23 +12,18 @@ defmodule PreverWeb.MapLive do
     ]
 
     # Fetch polygons from DB
-    burned_areas =
-      Prever.Repo.all(Prever.Wildfire.BurnedArea)
-      |> Enum.map(fn ba ->
-        %{
-          geometry: Geo.JSON.encode!(ba.geometry),
-          popup: "terrabrasilis - DN: #{ba.dn} - #{ba.date}"
-        }
-      end)
+    burned_areas = Prever.Wildfire.BurnedArea.all()
+    total_area_burned = Enum.reduce(burned_areas, 0.0, fn ba, acc -> acc + ba.area end)
 
     {:ok,
-      assign(
-        socket,
-        init: %{lat: -7.4496, lng: -60.6445, zoom: 5},
-        markers: markers,
-        burned_areas: burned_areas
-      )
-    }
+     assign(
+       socket,
+       init: %{lat: -7.4496, lng: -60.6445, zoom: 5},
+       markers: markers,
+       burned_areas: burned_areas,
+       total_area_burned: total_area_burned,
+       period: "2024-08"
+     )}
   end
 
   def render(assigns) do
@@ -47,6 +42,20 @@ defmodule PreverWeb.MapLive do
       </div>
 
       <div style="width: 30%; overflow-y: auto; padding: 1rem;">
+        <h3 style="color: red;">
+          Área Total com indício de Queimada no Período {@period}: ~{Float.round(
+            @total_area_burned,
+            2
+          )} hectares
+        </h3>
+        
+    <!-- Disclaimer -->
+        <p style="font-size: 0.85rem; color: #555; margin-top: 0.5rem;">
+          Valor aproximado com base em detecções de satélite não necessariamente refletem área total queimada.
+        </p>
+        
+    <!-- Divider -->
+        <hr style="border: 1px solid #1f2630; margin: 1rem 0;" />
         <.live_component
           module={GoesFireComponent}
           id="goes-fire-nsa"

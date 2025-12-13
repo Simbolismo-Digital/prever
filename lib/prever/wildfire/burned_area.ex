@@ -1,6 +1,9 @@
 defmodule Prever.Wildfire.BurnedArea do
   use Ecto.Schema
   import Ecto.Changeset
+  import Ecto.Query
+
+  alias Prever.Repo
 
   schema "burned_areas" do
     field :dn, :integer
@@ -20,6 +23,28 @@ defmodule Prever.Wildfire.BurnedArea do
     |> cast(attrs, [:dn, :date, :geometry])
     |> validate_required([:dn, :date, :geometry])
     |> compute_geom_hash()
+  end
+
+  def all() do
+    query =
+      from ba in __MODULE__,
+        select: %{
+          id: ba.id,
+          dn: ba.dn,
+          date: ba.date,
+          geometry: ba.geometry,
+          area: fragment("ST_Area(ST_Transform(?, 6933)) / 10000", ba.geometry)
+        }
+
+    Repo.all(query)
+    |> Enum.map(fn ba ->
+      %{
+        geometry: Geo.JSON.encode!(ba.geometry),
+        popup:
+          "#{ba.id} <br> terrabrasilis - DN: #{ba.dn} - #{ba.date} <br> Area: #{Float.round(ba.area, 2)} hectares",
+        area: ba.area
+      }
+    end)
   end
 
   defp compute_geom_hash(changeset) do
