@@ -7,11 +7,28 @@ defmodule PreverWeb.MapLive do
 
   def mount(_params, _session, socket) do
     markers = [
-      %{lat: -23.5505, lng: -46.6333, popup: "São Paulo"},
-      %{lat: -22.9068, lng: -43.1729, popup: "Rio de Janeiro"}
+      # %{lat: -23.5505, lng: -46.6333, popup: "São Paulo"},
+      # %{lat: -22.9068, lng: -43.1729, popup: "Rio de Janeiro"}
     ]
 
-    {:ok, assign(socket, init: %{lat: -7.4496, lng: -60.6445, zoom: 5}, markers: markers)}
+    # Fetch polygons from DB
+    burned_areas =
+      Prever.Repo.all(Prever.Wildfire.BurnedArea)
+      |> Enum.map(fn ba ->
+        %{
+          geometry: Geo.JSON.encode!(ba.geometry),
+          popup: "terrabrasilis - DN: #{ba.dn} - #{ba.date}"
+        }
+      end)
+
+    {:ok,
+      assign(
+        socket,
+        init: %{lat: -7.4496, lng: -60.6445, zoom: 5},
+        markers: markers,
+        burned_areas: burned_areas
+      )
+    }
   end
 
   def render(assigns) do
@@ -23,6 +40,7 @@ defmodule PreverWeb.MapLive do
           phx-hook="MapHook"
           data-markers={Jason.encode!(assigns.markers)}
           data-init={Jason.encode!(assigns.init)}
+          data-burnedareas={Jason.encode!(assigns.burned_areas)}
           style="width: 100%; height: 100%;"
         >
         </div>

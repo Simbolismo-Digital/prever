@@ -12,6 +12,8 @@ let MapHook = {
 
     // Render markers from assigns
     this.renderMarkers(this.el.dataset.markers);
+    // Render markers from assigns
+    this.renderBurnedAreas(this.el.dataset.burnedareas);
 
     this.hook_events();
   },
@@ -45,6 +47,23 @@ let MapHook = {
       L.marker([m.lat, m.lng])
         .addTo(this.markerLayer)
         .bindPopup(m.popup);
+    });
+  },
+
+  renderBurnedAreas(burnedAreasJson) {
+    if (this.burnedAreasLayer) {
+      this.burnedAreasLayer.clearLayers();
+    } else {
+      this.burnedAreasLayer = L.layerGroup().addTo(this.map);
+    }
+
+    const burnedAreass = JSON.parse(burnedAreasJson);
+    burnedAreass.forEach(polygon => {
+      const geojsonLayer = L.geoJSON(polygon.geometry, {
+        style: { color: 'red', weight: 2, fillOpacity: 0.4 }
+      }).bindPopup(polygon.popup);
+
+      geojsonLayer.addTo(this.burnedAreasLayer);
     });
   }
 };
