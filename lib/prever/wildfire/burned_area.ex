@@ -26,8 +26,20 @@ defmodule Prever.Wildfire.BurnedArea do
   end
 
   def all() do
+    # WKT simplificado da Amazônia Legal (aproximado)
+    amazonia_legal_wkt =
+      Prever.Wildfire.Shapefile.load_shape_geojson("priv/mvp/legal_amazon_2024.shp")
+      |> hd()
+      |> Geo.WKT.encode!()
+
     query =
       from ba in __MODULE__,
+        where:
+          fragment(
+            "ST_Intersects(?, ST_GeomFromText(?, 4326))",
+            ba.geometry,
+            ^amazonia_legal_wkt
+          ),
         select: %{
           id: ba.id,
           dn: ba.dn,

@@ -38,7 +38,7 @@ defmodule Prever.Wildfire.Shapefile do
     |> Enum.to_list()
   end
 
-  defp load_shape_geojson(path) do
+  def load_shape_geojson(path) do
     File.stream!(path, [], 2048)
     |> Shp.read()
     |> Stream.filter(fn
