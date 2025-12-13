@@ -3,7 +3,7 @@ import L from "leaflet";
 let MapHook = {
   mounted() {
     // Initialize map
-    this.map = L.map(this.el).setView([-15.7942, -47.8822], 4);
+    this.map = this.init_map(this.el.dataset.init);
 
     L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
       maxZoom: 19,
@@ -12,6 +12,20 @@ let MapHook = {
 
     // Render markers from assigns
     this.renderMarkers(this.el.dataset.markers);
+
+    this.hook_events();
+  },
+  init_map(initJson) {
+    const init = JSON.parse(initJson);
+    const map = L.map(this.el).setView([init.lat, init.lng], init.zoom);
+    return map;
+  },
+
+  hook_events() {
+    // Debug click: show lat/lng
+    this.map.on("click", (e) => {
+      console.log("Lat:", e.latlng.lat, "Lng:", e.latlng.lng);
+    });
   },
 
   updated() {
@@ -26,7 +40,7 @@ let MapHook = {
       this.markerLayer = L.layerGroup().addTo(this.map);
     }
 
-    let markers = JSON.parse(markersJson);
+    const markers = JSON.parse(markersJson);
     markers.forEach(m => {
       L.marker([m.lat, m.lng])
         .addTo(this.markerLayer)

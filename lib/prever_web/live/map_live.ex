@@ -11,7 +11,7 @@ defmodule PreverWeb.MapLive do
       %{lat: -22.9068, lng: -43.1729, popup: "Rio de Janeiro"}
     ]
 
-    {:ok, assign(socket, markers: markers)}
+    {:ok, assign(socket, init: %{lat: -7.4496, lng: -60.6445, zoom: 5}, markers: markers)}
   end
 
   def render(assigns) do
@@ -22,6 +22,7 @@ defmodule PreverWeb.MapLive do
           id="map-container"
           phx-hook="MapHook"
           data-markers={Jason.encode!(assigns.markers)}
+          data-init={Jason.encode!(assigns.init)}
           style="width: 100%; height: 100%;"
         >
         </div>
