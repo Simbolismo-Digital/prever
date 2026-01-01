@@ -25,6 +25,19 @@ defmodule Prever.Wildfire.BurnedArea do
     |> compute_geom_hash()
   end
 
+  def get!(id) do
+    Repo.one!(from ba in __MODULE__, where: ba.id == ^id)
+    |> then(
+      &%{
+        id: &1.id,
+        dn: &1.dn,
+        date: &1.date,
+        geometry: Geo.JSON.encode!(&1.geometry),
+        popup: "#{&1.id} <br> terrabrasilis - DN: #{&1.dn} - #{&1.date}"
+      }
+    )
+  end
+
   def all() do
     # WKT simplificado da Amazônia Legal (aproximado)
     amazonia_legal_wkt =
@@ -51,6 +64,9 @@ defmodule Prever.Wildfire.BurnedArea do
     Repo.all(query)
     |> Enum.map(fn ba ->
       %{
+        id: ba.id,
+        dn: ba.dn,
+        date: ba.date,
         geometry: Geo.JSON.encode!(ba.geometry),
         popup:
           "#{ba.id} <br> terrabrasilis - DN: #{ba.dn} - #{ba.date} <br> Area: #{Float.round(ba.area, 2)} hectares",

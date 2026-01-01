@@ -19,6 +19,7 @@ defmodule PreverWeb.Router do
 
     get "/", PageController, :home
     live "/live", MapLive, :index
+    live "/sentinel", SentinelLive
   end
 
   # Other scopes may use custom stacks.

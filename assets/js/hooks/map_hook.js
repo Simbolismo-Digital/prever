@@ -71,7 +71,12 @@ let MapHook = {
     const burnedAreas = JSON.parse(burnedAreasJson);
     burnedAreas.forEach(polygon => {
       const geojsonLayer = L.geoJSON(polygon.geometry, {
-        style: { color: 'red', weight: 2, fillOpacity: 0.4 }
+        style: { color: 'red', weight: 2, fillOpacity: 0.4 },
+        onEachFeature: (feature, layer) => {
+          layer.on("click", () => {
+            window.open(`/sentinel/?id=${polygon.id}`, "_blank");
+          });
+      }
       }).bindPopup(polygon.popup).addTo(this.burnedAreasLayer);
 
       // Bind tooltip to show info on hover

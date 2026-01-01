@@ -50,7 +50,7 @@ defmodule PreverWeb.MapLive do
             2
           )} hectares
         </h3>
-
+        
     <!-- Disclaimer -->
         <p style="font-size: 0.85rem; color: #555; margin-top: 0.5rem;">
           Valor aproximado com base em detecções de satélite não necessariamente refletem área total queimada.
@@ -65,7 +65,7 @@ defmodule PreverWeb.MapLive do
           </a>
           se aproximam desses valores.
         </p>
-
+        
     <!-- Divider -->
         <hr style="border: 1px solid #1f2630; margin: 1rem 0;" />
         <.live_component
